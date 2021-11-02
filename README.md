@@ -1,5 +1,7 @@
-# hive-metastore-standalone
-hive metastore standalone
+# Hive Metastore Standalone
+
+_A dockerized infrastructure to build and keep running up a metastore without [Hive](https://hive.apache.org/) _
+
 
 ## Requirements and Installation
 
