@@ -11,7 +11,7 @@ from thrift.protocol.TProtocol import TProtocolException
 from thrift.TRecursive import fix_spec
 
 import sys
-import thrift_autogen.hive_metastore.fb303.ttypes
+import client.thrift_autogen.hive_metastore.fb303.ttypes
 
 from thrift.transport import TTransport
 all_structs = []
