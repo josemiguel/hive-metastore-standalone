@@ -11,9 +11,10 @@ from thrift.protocol.TProtocol import TProtocolException
 from thrift.TRecursive import fix_spec
 
 import sys
-import fb303.FacebookService
+import thrift_autogen.hive_metastore.fb303.FacebookService
+from  thrift_autogen.hive_metastore import fb303
 import logging
-from .ttypes import *
+from thrift_autogen.hive_metastore.ttypes import *
 from thrift.Thrift import TProcessor
 from thrift.transport import TTransport
 all_structs = []
