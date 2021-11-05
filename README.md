@@ -5,6 +5,9 @@ _A dockerized infrastructure to build and keep running up a metastore without [H
 
 ## Requirements and Installation
 
+thrift auto-generated files
+- the generated files are already in the repo, but if you need to generated again, there is a dockerfile to compile the thrift files
+
 S3 pre-configuration
 
 - Create a bucket for your warehouse, metadata of your databases, tables will be created in this bucket
