@@ -32,4 +32,5 @@ RUN curl -L https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java
 
 COPY conf/metastore-site.xml /opt/hive-metastore/conf/
 COPY entrypoint.sh /opt/hive-metastore/bin/entrypoint.sh
-RUN chmod -x /opt/hive-metastore/bin/entrypoint.sh
+RUN chmod 755 /opt/hive-metastore/bin/entrypoint.sh
+
