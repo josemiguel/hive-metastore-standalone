@@ -25,7 +25,7 @@
 </property>
 <property>
 	<name>metastore.warehouse.dir</name>
-	<value>s3a://<YOUR_S3_BUCKET></value>
+	<value>s3a://clicampo-warehouse</value>
 </property>
 <property>
 	<name>metastore.thrift.port</name>

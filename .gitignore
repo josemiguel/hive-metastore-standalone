@@ -1,1 +1,5 @@
 *__pycache_*
+.env*
+.venv*
+.idea*
+*metastore-site.xml*
