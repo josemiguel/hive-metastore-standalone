@@ -75,7 +75,7 @@ class HivePandasDataset():
     def save_as_csv(self, partition_values=None, merge_schema=False, overwrite=True):
 
         with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
-            table = self.create_structures_if_not_exists(self.location)
+            table = self.create_structures_if_not_exists()
             new_partition_thrift_object = HiveTable.get_partition_from_table_thrift_object(table, partition_values)
 
             sorted_columns = list(map(lambda col: col.name, table.sd.cols + table.partitionKeys))
