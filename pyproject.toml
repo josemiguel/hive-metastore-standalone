@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hive_metastore_standalone"
-version = "0.1.3"
+version = "0.1.4"
 description = ""
 authors = ["Jose Miguel <jmj.noblecilla@gmail.com>"]
 
@@ -12,6 +12,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.9"
 pandas = "^1.3.4"
+thrift = "^0.15.0"
 
 [tool.poetry.dev-dependencies]
 
