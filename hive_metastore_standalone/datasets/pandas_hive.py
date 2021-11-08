@@ -16,7 +16,8 @@ class HivePandasDataset():
                  tablename=None,
                  dataframe=None,
                  schema=None,
-                 partitions=None):
+                 partitions=None,
+                 location=None):
 
         for col in list(dataframe.columns):
             if col not in schema and col not in partitions:
@@ -29,8 +30,9 @@ class HivePandasDataset():
         self.hive_host = hive_host
         self.hive_port = hive_port
         self.partitions = partitions
+        self.location = location
 
-    def create_structures_if_not_exists(self, location):
+    def create_structures_if_not_exists(self):
         with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
             table_no_exists = False
             try:
@@ -43,12 +45,12 @@ class HivePandasDataset():
                 table = hive_client.get_table(self.database, self.tablename)
             except NoSuchObjectException:
                 table_no_exists = True
-                if not location:
+                if not self.location:
                     raise Exception("Table does not exists, you must pass variable `location`")
 
             if table_no_exists:
                 hive_table = HiveTable(database=self.database, tablename=self.tablename,
-                                       location=location, schema=self.schema,
+                                       location=self.location, schema=self.schema,
                                        partitions=self.partitions, fileformat='csv')
 
                 table = hive_table.get_thrift_object()
@@ -70,7 +72,7 @@ class HivePandasDataset():
         if not is_sorted:
             self.dataframe = self.dataframe[sorted_columns]
 
-    def save_as_csv(self, partition_values=None, location=None, merge_schema=False, overwrite=True):
+    def save_as_csv(self, partition_values=None, merge_schema=False, overwrite=True):
 
         with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
             table = self.create_structures_if_not_exists(location)
