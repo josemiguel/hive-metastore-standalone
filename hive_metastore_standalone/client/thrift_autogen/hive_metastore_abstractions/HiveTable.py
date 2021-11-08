@@ -1,9 +1,9 @@
 import copy
 from typing import Dict
 
-from client.thrift_autogen.hive_metastore.ttypes import SerDeInfo, FieldSchema, StorageDescriptor, Table, \
+from hive_metastore_standalone.client.thrift_autogen.hive_metastore.ttypes import SerDeInfo, FieldSchema, StorageDescriptor, Table, \
     PrincipalType, Partition
-from client.thrift_autogen.hive_metastore_abstractions.AbstractHiveEntity import AbstractHiveEntity
+from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.AbstractHiveEntity import AbstractHiveEntity
 
 
 class HiveTable(AbstractHiveEntity):

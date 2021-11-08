@@ -1,6 +1,6 @@
 
-from client.thrift_autogen.hive_metastore.ttypes import Database
-from client.thrift_autogen.hive_metastore_abstractions.AbstractHiveEntity import AbstractHiveEntity
+from hive_metastore_standalone.client.thrift_autogen.hive_metastore.ttypes import Database
+from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.AbstractHiveEntity import AbstractHiveEntity
 
 class HiveDatabase(AbstractHiveEntity):
     def __init__(self, database_name=None):

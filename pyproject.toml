@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hive_metastore_standalone"
-version = "0.1.4"
+version = "0.1.5"
 description = ""
 authors = ["Jose Miguel <jmj.noblecilla@gmail.com>"]
 
