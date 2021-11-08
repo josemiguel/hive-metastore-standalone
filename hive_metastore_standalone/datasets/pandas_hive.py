@@ -2,10 +2,10 @@ from urllib.parse import urlparse
 import io
 import boto3
 import logging
-from client.hive_metastore_client import HiveMetastoreClient
-from client.thrift_autogen.hive_metastore.ttypes import NoSuchObjectException, AlreadyExistsException
-from client.thrift_autogen.hive_metastore_abstractions.HiveDatabase import HiveDatabase
-from client.thrift_autogen.hive_metastore_abstractions.HiveTable import HiveTable
+from hive_metastore_standalone.client.hive_metastore_client import HiveMetastoreClient
+from hive_metastore_standalone.client.thrift_autogen.hive_metastore.ttypes import NoSuchObjectException, AlreadyExistsException
+from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.HiveDatabase import HiveDatabase
+from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.HiveTable import HiveTable
 logging.basicConfig(level=logging.INFO)
 
 class HivePandasDataset():

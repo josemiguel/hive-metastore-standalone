@@ -4,7 +4,7 @@ from typing import List, Any, Tuple, Dict
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
-from client.thrift_autogen.hive_metastore import ThriftHiveMetastore
+from hive_metastore_standalone.client.thrift_autogen.hive_metastore import ThriftHiveMetastore
 
 class HiveMetastoreClient(ThriftHiveMetastore.Client):
 
