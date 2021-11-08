@@ -34,3 +34,4 @@ COPY conf/metastore-site.xml /opt/hive-metastore/conf/
 COPY entrypoint.sh /opt/hive-metastore/bin/entrypoint.sh
 RUN chmod 755 /opt/hive-metastore/bin/entrypoint.sh
 
+CMD /opt/hive-metastore/bin/entrypoint.sh

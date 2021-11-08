@@ -1,5 +1,5 @@
 import copy
-from typing import List, Any, Tuple
+from typing import List, Any, Tuple, Dict
 
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
@@ -36,3 +36,4 @@ class HiveMetastoreClient(ThriftHiveMetastore.Client):
 
     def __exit__(self, exc_type: str, exc_val: str, exc_tb: str) -> None:
         self.close()
+

@@ -3,3 +3,4 @@
 .venv*
 .idea*
 *metastore-site.xml*
+*hive.properties*

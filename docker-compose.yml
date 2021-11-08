@@ -3,7 +3,7 @@ services:
   hive-metastore:
     image: "hive-metastore/metastore"
     build: .
-    command: sh -c "/opt/hive-metastore/bin/entrypoint.sh"
+    command: sh -c "sh /opt/hive-metastore/bin/entrypoint.sh 2>&1 /var/log/metastore.log "
     depends_on:
       - db 
     environment:
@@ -13,10 +13,10 @@ services:
     ports:
       - "9083:9083/tcp"
     networks:
-      vpcbr:
+      vpc123:
         ipv4_address: 10.5.0.5
   db:
-    image: mysql
+    image: mysql:5.7
     restart: always
     environment:
       MYSQL_USER: "${MYSQL_USER}" 
@@ -24,20 +24,20 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: hive_metastore  
     ports:
-      - "3306:3306"
+      - "3308:3306/tcp"
     expose:
       - '3306'
     volumes:
       - db:/var/lib/mysql
     networks:
-      vpcbr:
+      vpc123:
         ipv4_address: 10.5.0.6
 
 volumes:
    db:
 
 networks:
-  vpcbr:
+  vpc123:
     driver: bridge
     ipam:
      config:
