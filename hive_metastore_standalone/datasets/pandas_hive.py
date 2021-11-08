@@ -36,8 +36,9 @@ class HivePandasDataset():
         with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
             table_no_exists = False
             try:
-                hive_database = HiveDatabase(self.database)
-                hive_client.create_database(hive_database.thrift_object)
+                hive_database = HiveDatabase(database_name=self.database, location=self.location)
+                thrift_database = hive_database.thrift_object
+                hive_client.create_database(thrift_database)
             except AlreadyExistsException:
                 logging.info(f"Database {self.database} already exists")
 
@@ -53,18 +54,18 @@ class HivePandasDataset():
                                        location=self.location, schema=self.schema,
                                        partitions=self.partitions, fileformat='csv')
 
-                table = hive_table.get_thrift_object()
-                hive_client.create_table(hive_table.get_thrift_object())
+                thrift_table = hive_table.thrift_object
+                hive_client.create_table(thrift_table)
             else:
                 logging.info(f"Table {self.tablename} already exists")
 
             return table
 
-    def validate_schema(self, sorted_columns, dataframe_cols):
+    def validate_schema(self, sorted_columns, sorted_partitions, dataframe_cols):
         is_sorted = all([x == y for x, y in zip(sorted_columns, dataframe_cols)])
         equals = all([x == y for x, y in zip(sorted(sorted_columns), sorted(dataframe_cols))])
 
-        if len(dataframe_cols) != len(sorted_columns):
+        if len(dataframe_cols) != len(sorted_columns + sorted_partitions):
             raise Exception(f"Number of columns different your data: {dataframe_cols} metastore: {sorted_columns}")
         if not equals:
             raise Exception(f"Name of columns different your data: {dataframe_cols} metastore: {sorted_columns}")
@@ -76,13 +77,15 @@ class HivePandasDataset():
 
         with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
             table = self.create_structures_if_not_exists()
+
             new_partition_thrift_object = HiveTable.get_partition_from_table_thrift_object(table, partition_values)
 
-            sorted_columns = list(map(lambda col: col.name, table.sd.cols + table.partitionKeys))
+            sorted_columns = list(map(lambda col: col.name, table.sd.cols))
+            sorted_partitions = list(map(lambda col: col.name, table.partitionKeys))
             dataframe_cols = list(self.dataframe.columns)
 
             if not merge_schema:
-                self.validate_schema(sorted_columns, dataframe_cols)
+                self.validate_schema(sorted_columns, sorted_partitions, dataframe_cols)
             else:
                 new_columns = set(self.schema) - set(sorted_columns)  # (A,B,C) - (A, B) = C, new schema = ABC
                 new_columns_schema = {k: v for k, v in self.schema.items() if k in new_columns}
