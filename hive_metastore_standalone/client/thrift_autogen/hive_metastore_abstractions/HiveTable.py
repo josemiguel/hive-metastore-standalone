@@ -8,6 +8,18 @@ from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions
 
 class HiveTable(AbstractHiveEntity):
 
+    serde_type = {
+        "csv":
+            {"serde_lib": "org.apache.hadoop.hive.serde2.OpenCSVSerde",
+             "serde_input": "org.apache.hadoop.mapred.TextInputFormat",
+             "serde_output": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"},
+        "parquet":
+            {"serde_lib": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+             "serde_input": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+             "serde_output": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+             }
+    }
+
     def __init__(self, database=None, tablename=None, location=None, schema=None, partitions=None, fileformat=None) -> None:
         self.database = database
         self.tablename = tablename
@@ -16,20 +28,32 @@ class HiveTable(AbstractHiveEntity):
         self.partitions = partitions
         self.fileformat = fileformat
 
+    @classmethod
+    def from_thrift_object(cls, table_thrift_object: Table) -> "HiveTable":
+
+        schema = {col.name: col.type for col in table_thrift_object.sd}
+        partitions = {col.name: col.type for col in table_thrift_object.partitionKeys}
+
+
+        hive_table = cls(database=table_thrift_object.dbName,
+            tablename=table_thrift_object.tableName,
+            location=table_thrift_object.sd.location,
+            schema=schema,
+            partitions=partitions,
+            fileformat=None
+            )
+
+        fileformat = None
+        for key, serde_info in hive_table.serde_type:
+            if serde_info["serde_lib"] == table_thrift_object.sd.serdeInfo.serializationLib:
+                fileformat = key
+
+        if fileformat is None:
+            raise Exception("Fileformat not found ")
+        hive_table.fileformat = fileformat
+        return hive_table
 
     def get_thrift_object(self):
-
-        serde_type = {
-            "csv":
-                {"serde_lib": "org.apache.hadoop.hive.serde2.OpenCSVSerde",
-                 "serde_input": "org.apache.hadoop.mapred.TextInputFormat",
-                 "serde_output": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"},
-            "parquet":
-                {"serde_lib": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
-                 "serde_input": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-                 "serde_output": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
-                 }
-        }
 
         columns = []
         for col_name, col_type in self.schema.items():
@@ -41,7 +65,7 @@ class HiveTable(AbstractHiveEntity):
 
         serde_info = SerDeInfo(
             name=None,
-            serializationLib=serde_type[self.fileformat]['serde_lib'],
+            serializationLib=self.serde_type[self.fileformat]['serde_lib'],
             parameters=None,
             description=None,
             serializerClass=None,
@@ -52,8 +76,8 @@ class HiveTable(AbstractHiveEntity):
         storage_descriptor = StorageDescriptor(
             cols=columns,
             location=self.location,
-            inputFormat=serde_type[self.fileformat]['serde_input'],
-            outputFormat=serde_type[self.fileformat]['serde_output'],
+            inputFormat=self.serde_type[self.fileformat]['serde_input'],
+            outputFormat=self.serde_type[self.fileformat]['serde_output'],
             compressed=None,
             numBuckets=None,
             serdeInfo=serde_info,
@@ -86,9 +110,8 @@ class HiveTable(AbstractHiveEntity):
         )
         return table
 
-    @staticmethod
-    def get_partition_from_table_thrift_object(table_thrift_object: Table, partition: Dict):
-
+    def get_partition_thrift_object(self, partition: Dict):
+        table_thrift_object = self.thrift_object
         values = []
         location_suffix = []
         for part in table_thrift_object.partitionKeys:
@@ -114,8 +137,8 @@ class HiveTable(AbstractHiveEntity):
         )
         return new_partition_thrift_object
 
-    @staticmethod
-    def add_columns(table, new_columns_schema):
+    def add_columns(self, new_columns_schema):
+        table = self.thrift_object #ref
         columns = []
         for col_name, col_type in new_columns_schema.items():
             columns.append(FieldSchema(name=col_name, type=col_type, comment=""))
@@ -123,8 +146,8 @@ class HiveTable(AbstractHiveEntity):
         table.sd.cols.extend(columns)
         return table
 
-    @staticmethod
-    def drop_columns(table, old_columns_names):
+    def drop_columns(self, old_columns_names):
+        table = self.thrift_object #ref
         columns = []
         for col in table.sd.cols:
             if col.name not in old_columns_names:
