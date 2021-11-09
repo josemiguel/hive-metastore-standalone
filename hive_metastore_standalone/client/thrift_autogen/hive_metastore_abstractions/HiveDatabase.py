@@ -3,10 +3,11 @@ from hive_metastore_standalone.client.thrift_autogen.hive_metastore.ttypes impor
 from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.AbstractHiveEntity import AbstractHiveEntity
 
 class HiveDatabase(AbstractHiveEntity):
+
     def __init__(self, database_name=None, location=None):
         self.database_name = database_name
         self.location = location
-        self._thrift_object = None
+        self.thrift_object = self.get_thrift_object()
 
     def get_thrift_object(self):
         database = Database(

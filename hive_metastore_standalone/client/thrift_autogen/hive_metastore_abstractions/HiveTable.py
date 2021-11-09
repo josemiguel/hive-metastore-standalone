@@ -27,6 +27,7 @@ class HiveTable(AbstractHiveEntity):
         self.schema = schema
         self.partitions = partitions
         self.fileformat = fileformat
+        self.thrift_object = self.get_thrift_object()
 
     @classmethod
     def from_thrift_object(cls, table_thrift_object: Table) -> "HiveTable":
@@ -44,7 +45,7 @@ class HiveTable(AbstractHiveEntity):
             )
 
         fileformat = None
-        for key, serde_info in hive_table.serde_type:
+        for key, serde_info in hive_table.serde_type.items():
             if serde_info["serde_lib"] == table_thrift_object.sd.serdeInfo.serializationLib:
                 fileformat = key
 
