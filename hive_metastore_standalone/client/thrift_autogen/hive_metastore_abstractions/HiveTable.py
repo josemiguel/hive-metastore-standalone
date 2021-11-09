@@ -5,20 +5,21 @@ from hive_metastore_standalone.client.thrift_autogen.hive_metastore.ttypes impor
     PrincipalType, Partition
 from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.AbstractHiveEntity import AbstractHiveEntity
 
+serde_type = {
+    "csv":
+        {"serde_lib": "org.apache.hadoop.hive.serde2.OpenCSVSerde",
+         "serde_input": "org.apache.hadoop.mapred.TextInputFormat",
+         "serde_output": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"},
+    "parquet":
+        {"serde_lib": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+         "serde_input": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+         "serde_output": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+         }
+}
 
 class HiveTable(AbstractHiveEntity):
 
-    serde_type = {
-        "csv":
-            {"serde_lib": "org.apache.hadoop.hive.serde2.OpenCSVSerde",
-             "serde_input": "org.apache.hadoop.mapred.TextInputFormat",
-             "serde_output": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"},
-        "parquet":
-            {"serde_lib": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
-             "serde_input": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-             "serde_output": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
-             }
-    }
+
 
     def __init__(self, database=None, tablename=None, location=None, schema=None, partitions=None, fileformat=None) -> None:
         self.database = database
@@ -35,23 +36,22 @@ class HiveTable(AbstractHiveEntity):
         schema = {col.name: col.type for col in table_thrift_object.sd.cols}
         partitions = {col.name: col.type for col in table_thrift_object.partitionKeys}
 
+        fileformat = None
+        for key, serde_info in serde_type.items():
+            if serde_info["serde_lib"] == table_thrift_object.sd.serdeInfo.serializationLib:
+                fileformat = key
+
+        if fileformat is None:
+            raise Exception("Fileformat not found ")
 
         hive_table = cls(database=table_thrift_object.dbName,
             tablename=table_thrift_object.tableName,
             location=table_thrift_object.sd.location,
             schema=schema,
             partitions=partitions,
-            fileformat=None
+            fileformat=fileformat
             )
 
-        fileformat = None
-        for key, serde_info in hive_table.serde_type.items():
-            if serde_info["serde_lib"] == table_thrift_object.sd.serdeInfo.serializationLib:
-                fileformat = key
-
-        if fileformat is None:
-            raise Exception("Fileformat not found ")
-        hive_table.fileformat = fileformat
         return hive_table
 
     def get_thrift_object(self):
@@ -66,7 +66,7 @@ class HiveTable(AbstractHiveEntity):
 
         serde_info = SerDeInfo(
             name=None,
-            serializationLib=self.serde_type[self.fileformat]['serde_lib'],
+            serializationLib=serde_type[self.fileformat]['serde_lib'],
             parameters=None,
             description=None,
             serializerClass=None,
@@ -77,8 +77,8 @@ class HiveTable(AbstractHiveEntity):
         storage_descriptor = StorageDescriptor(
             cols=columns,
             location=self.location,
-            inputFormat=self.serde_type[self.fileformat]['serde_input'],
-            outputFormat=self.serde_type[self.fileformat]['serde_output'],
+            inputFormat=serde_type[self.fileformat]['serde_input'],
+            outputFormat=serde_type[self.fileformat]['serde_output'],
             compressed=None,
             numBuckets=None,
             serdeInfo=serde_info,
