@@ -7,10 +7,13 @@ import logging
 import pandas
 
 from hive_metastore_standalone.client.hive_metastore_client import HiveMetastoreClient
-from hive_metastore_standalone.client.thrift_autogen.hive_metastore.ttypes import NoSuchObjectException, AlreadyExistsException
+from hive_metastore_standalone.client.thrift_autogen.hive_metastore.ttypes import NoSuchObjectException, \
+    AlreadyExistsException
 from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.HiveDatabase import HiveDatabase
 from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.HiveTable import HiveTable
+
 logging.basicConfig(level=logging.INFO)
+
 
 class HivePandasDataset():
 
@@ -21,7 +24,7 @@ class HivePandasDataset():
                  schema=None,
                  partitions=None,
                  location=None,
-                 dataframe = None):
+                 dataframe=None):
 
         if not dataframe is None:
             for col in list(dataframe.columns):
@@ -77,7 +80,8 @@ class HivePandasDataset():
         equals = all([x == y for x, y in zip(sorted(sorted_columns), sorted(dataframe_cols))])
 
         if len(dataframe_cols) != len(sorted_columns + sorted_partitions):
-            raise Exception(f"Number of columns different your data: {dataframe_cols} metastore: {sorted_columns} + {sorted_partitions}")
+            raise Exception(
+                f"Number of columns different your data: {dataframe_cols} metastore: {sorted_columns} + {sorted_partitions}")
         if not equals:
             raise Exception(f"Name of columns different your data: {dataframe_cols} metastore: {sorted_columns}")
 
@@ -137,13 +141,13 @@ class HivePandasDataset():
             response = s3client.list_objects_v2(Bucket=bucket, Prefix=objectkey)
             frames = []
             for object in response.get('Contents', []):
-                logging.info(f"Overwritting data: deleting: {object['Key']}")
+                logging.info(f"Reading data from: {bucket}/{object['Key']}")
                 s3client.get_object(Bucket=bucket, Key=object['Key'])
                 status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
                 if status == 200:
-                    frames.append(pandas.read_csv(response.get("Body")))
+                    frames.append(pandas.read_csv(response.get("Body")), header=None, names=list(partition_values.keys()))
 
-            df = functools.reduce(pandas.concat, frames, pandas.DataFrame()) # flattening
+            df = functools.reduce(pandas.concat, frames, pandas.DataFrame())  # flattening
 
         return df.to_dict("records")
 
@@ -152,7 +156,7 @@ class HivePandasDataset():
         for partition_values in multi_partition_values:
             frames.append(self.read_dataframe(partition_values=partition_values))
 
-        return functools.reduce(pandas.concat, frames, pandas.DataFrame()) # flattening
+        return functools.reduce(pandas.concat, frames, pandas.DataFrame())  # flattening
 
     def write_dataframe_csv(self, partition_location, overwrite=False):
         parse_result = urlparse(partition_location, allow_fragments=False)
