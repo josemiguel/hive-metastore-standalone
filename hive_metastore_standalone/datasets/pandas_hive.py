@@ -138,8 +138,6 @@ class HivePandasDataset():
             bucket = parse_result.netloc
             objectkey = parse_result.path.strip('/')
 
-            col_names = [k for k, v in self.schema.items()]
-
             list_response = s3client.list_objects_v2(Bucket=bucket, Prefix=objectkey)
             status = list_response.get("ResponseMetadata", {}).get("HTTPStatusCode")
             frames = []
@@ -148,7 +146,7 @@ class HivePandasDataset():
                 object_response = s3client.get_object(Bucket=bucket, Key=object['Key'])
                 status = object_response.get("ResponseMetadata", {}).get("HTTPStatusCode")
                 if status == 200:
-                    frames.append(pandas.read_csv(object_response.get("Body")), header=None, names=col_names)
+                    frames.append(pandas.read_csv(object_response.get("Body"), header=None, names=list(partition_values.keys())))
 
             df = functools.reduce(pandas.concat, frames, pandas.DataFrame())  # flattening
 
