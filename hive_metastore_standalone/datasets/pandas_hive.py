@@ -109,7 +109,7 @@ class HivePandasDataset():
                 hive_table.drop_columns(old_columns_names)
 
                 hive_client.setMetaConf(hive_client.COL_TYPE_INCOMPATIBILITY_DISALLOW_CONFIG, "false")
-                hive_client.alter_table(dbname=self.database, tbl_name=self.tablename, new_tbl=table)
+                hive_client.alter_table(dbname=self.database, tbl_name=self.tablename, new_tbl=hive_table.thrift_object)
 
             try:
                 hive_client.add_partition(new_partition_thrift_object)

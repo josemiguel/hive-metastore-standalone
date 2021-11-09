@@ -31,7 +31,7 @@ class HiveTable(AbstractHiveEntity):
     @classmethod
     def from_thrift_object(cls, table_thrift_object: Table) -> "HiveTable":
 
-        schema = {col.name: col.type for col in table_thrift_object.sd}
+        schema = {col.name: col.type for col in table_thrift_object.sd.cols}
         partitions = {col.name: col.type for col in table_thrift_object.partitionKeys}
 
 
