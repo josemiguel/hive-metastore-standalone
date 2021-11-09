@@ -150,14 +150,18 @@ class HivePandasDataset():
 
             df = functools.reduce(lambda x, y: pandas.concat([x, y]), frames, pandas.DataFrame())  # flattening
 
-        return df.to_dict("records")
+        return df
 
     def read_multiple_dataframes(self, multi_partition_values):
-        frames = []
-        for partition_values in multi_partition_values:
-            frames.append(self.read_dataframe(partition_values=partition_values))
 
-        return functools.reduce(lambda x, y: pandas.concat([x, y]), frames, pandas.DataFrame())  # flattening
+        concat_series = []
+        for partition_values in multi_partition_values:
+            df = self.read_dataframe(partition_values=partition_values)
+            df_series =df.to_dict("records")
+            for serie in df_series:
+                concat_series.append(serie)
+
+        return pandas.DataFrame(concat_series)
 
     def write_dataframe_csv(self, partition_location, overwrite=False):
         parse_result = urlparse(partition_location, allow_fragments=False)
