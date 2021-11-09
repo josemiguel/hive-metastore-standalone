@@ -157,7 +157,7 @@ class HivePandasDataset():
         for partition_values in multi_partition_values:
             frames.append(self.read_dataframe(partition_values=partition_values))
 
-        return functools.reduce(pandas.concat, frames, pandas.DataFrame())  # flattening
+        return functools.reduce(lambda x, y: pandas.concat([x, y]), frames, pandas.DataFrame())  # flattening
 
     def write_dataframe_csv(self, partition_location, overwrite=False):
         parse_result = urlparse(partition_location, allow_fragments=False)
