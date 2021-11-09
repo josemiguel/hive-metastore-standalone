@@ -148,7 +148,7 @@ class HivePandasDataset():
                 if status == 200:
                     frames.append(pandas.read_csv(object_response.get("Body"), header=None, names=list(partition_values.keys())))
 
-            df = functools.reduce(pandas.concat, frames, pandas.DataFrame())  # flattening
+            df = functools.reduce(lambda x, y: pandas.concat([x, y]), frames, pandas.DataFrame())  # flattening
 
         return df.to_dict("records")
 
