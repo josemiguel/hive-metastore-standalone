@@ -138,7 +138,7 @@ class HivePandasDataset():
             bucket = parse_result.netloc
             objectkey = parse_result.path.strip('/')
 
-            col_names = [k for k, v in self.columns.items()]
+            col_names = [k for k, v in self.schema.items()]
 
             list_response = s3client.list_objects_v2(Bucket=bucket, Prefix=objectkey)
             status = list_response.get("ResponseMetadata", {}).get("HTTPStatusCode")
