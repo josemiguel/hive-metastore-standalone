@@ -1,7 +1,11 @@
+import functools
 from urllib.parse import urlparse
 import io
 import boto3
 import logging
+
+import pandas
+
 from hive_metastore_standalone.client.hive_metastore_client import HiveMetastoreClient
 from hive_metastore_standalone.client.thrift_autogen.hive_metastore.ttypes import NoSuchObjectException, AlreadyExistsException
 from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.HiveDatabase import HiveDatabase
@@ -35,6 +39,7 @@ class HivePandasDataset():
     def create_structures_if_not_exists(self) -> HiveTable:
         with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
             table_no_exists = False
+            hive_table = None
             try:
                 hive_database = HiveDatabase(database_name=self.database, location=self.location)
                 thrift_database = hive_database.thrift_object
@@ -44,6 +49,8 @@ class HivePandasDataset():
 
             try:
                 table = hive_client.get_table(self.database, self.tablename)
+                hive_table = HiveTable.from_thrift_object(table)
+
             except NoSuchObjectException:
                 table_no_exists = True
                 if not self.location:
@@ -59,7 +66,10 @@ class HivePandasDataset():
             else:
                 logging.info(f"Table {self.tablename} already exists")
 
-            return HiveTable.from_thrift_object(table)
+            if hive_table is None:
+                raise Exception(f"Unable to create {self.database}.{self.tablename}")
+
+            return hive_table
 
     def validate_schema(self, sorted_columns, sorted_partitions, dataframe_cols):
         is_sorted = all([x == y for x, y in zip(sorted_columns, dataframe_cols)])
@@ -93,7 +103,7 @@ class HivePandasDataset():
                 old_columns = set(sorted_columns) - set(self.schema)  # (B,C) - (B, A) = C, new schema = BA
                 old_columns_names = [col for col in sorted_columns if col in old_columns]
 
-                logging.info(f"Adding new columns:  {new_columns_schema.keys()} ")
+                logging.info(f"Adding new columns:  {list(new_columns_schema.keys())} ")
                 hive_table.add_columns(new_columns_schema)
                 logging.info(f"Removing old columns:  {old_columns_names} ")
                 hive_table.drop_columns(old_columns_names)
@@ -103,15 +113,45 @@ class HivePandasDataset():
 
             try:
                 hive_client.add_partition(new_partition_thrift_object)
-
             except AlreadyExistsException:
                 logging.info(f"Partition {new_partition_thrift_object.sd.location} already exists")
-
             finally:
                 if overwrite:
                     logging.info(f"Overwritting data at {new_partition_thrift_object.sd.location}")
                     self.write_dataframe_csv(partition_location=new_partition_thrift_object.sd.location,
                                              overwrite=overwrite)
+
+    def read_dataframe(self, partition_values):
+        s3client = boto3.client("s3")
+        with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
+            table = hive_client.get_table(self.database, self.tablename)
+            hive_table = HiveTable.from_thrift_object(table)
+            partition = hive_table.get_partition_thrift_object(partition_values)
+            partition_location = partition.sd.location
+
+            parse_result = urlparse(partition_location, allow_fragments=False)
+            bucket = parse_result.netloc
+            objectkey = parse_result.path.strip('/')
+
+            response = s3client.list_objects_v2(Bucket=bucket, Prefix=objectkey)
+            frames = []
+            for object in response.get('Contents', []):
+                logging.info(f"Overwritting data: deleting: {object['Key']}")
+                s3client.get_object(Bucket=bucket, Key=object['Key'])
+                status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+                if status == 200:
+                    frames.append(pandas.read_csv(response.get("Body")))
+
+            df = functools.reduce(pandas.concat, frames, pandas.DataFrame()) # flattening
+
+        return df.to_dict("records")
+
+    def read_multiple_dataframes(self, multi_partition_values):
+        frames = []
+        for partition_values in multi_partition_values:
+            frames.append(self.read_dataframe(partition_values=partition_values))
+
+        return functools.reduce(pandas.concat, frames, pandas.DataFrame()) # flattening
 
     def write_dataframe_csv(self, partition_location, overwrite=False):
         parse_result = urlparse(partition_location, allow_fragments=False)
@@ -130,7 +170,7 @@ class HivePandasDataset():
             objectkey = parse_result.path.strip('/')
             objectkey = objectkey + '/raw_data_%08d.%s' % (index, 'csv')
             with io.StringIO() as csv_buffer:
-                self.dataframe.to_csv(csv_buffer, index=False, header=False)
+                df.to_csv(csv_buffer, index=False, header=False)
 
                 response = s3client.put_object(Bucket=bucket, Key=objectkey, Body=csv_buffer.getvalue())
                 response_metadata = response.get("ResponseMetadata", {})
