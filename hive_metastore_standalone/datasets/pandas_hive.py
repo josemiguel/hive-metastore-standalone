@@ -18,14 +18,15 @@ class HivePandasDataset():
                  hive_port=9083,
                  database=None,
                  tablename=None,
-                 dataframe=None,
                  schema=None,
                  partitions=None,
-                 location=None):
+                 location=None,
+                 dataframe = None):
 
-        for col in list(dataframe.columns):
-            if col not in schema and col not in partitions:
-                raise Exception(f"Could not create Dataset schema mismatch {col} is not present in schema dict")
+        if not dataframe is None:
+            for col in list(dataframe.columns):
+                if col not in schema and col not in partitions:
+                    raise Exception(f"Could not create Dataset schema mismatch {col} is not present in schema dict")
 
         self.database = database
         self.tablename = tablename
