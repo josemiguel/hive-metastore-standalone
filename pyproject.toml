@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "hive_metastore_standalone"
-version = "0.3.4"
+version = "0.4.0"
 description = ""
-authors = ["Jose Miguel <jmj.noblecilla@gmail.com>"]
+authors = ["Jose Miguel <jmj.noblecilla@gmail.com>", "Gabriel Montañola <gabriel@montanola.com>"]
 
 packages = [
     { include = "hive_metastore_standalone" },
@@ -10,12 +10,27 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6.13"
+python = "~3.8"
 pandas = "^1.1.5"
 thrift = "^0.15.0"
 boto3 = "^1.20.2"
 
+
 [tool.poetry.dev-dependencies]
+black = "^21.12b0"
+isort = "^5.10.1"
+flake8 = "^4.0.1"
+
+[tool.black]
+line-length = 100
+target-version = ["py38"]
+
+[tool.isort]
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
