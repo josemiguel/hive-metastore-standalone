@@ -5,7 +5,7 @@ services:
     build: .
     command: sh -c "sh /opt/hive-metastore/bin/entrypoint.sh 2>&1 /var/log/metastore.log "
     depends_on:
-      - db 
+      - db
     environment:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
@@ -19,10 +19,10 @@ services:
     image: mysql:5.7
     restart: always
     environment:
-      MYSQL_USER: "${MYSQL_USER}" 
+      MYSQL_USER: "${MYSQL_USER}"
       MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: hive_metastore  
+      MYSQL_DATABASE: hive_metastore
     ports:
       - "3308:3306/tcp"
     expose:
