@@ -20,6 +20,7 @@ boto3 = "^1.20.2"
 black = "^21.12b0"
 isort = "^5.10.1"
 flake8 = "^4.0.1"
+pre-commit = "^2.16.0"
 
 [tool.black]
 line-length = 100
