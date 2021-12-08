@@ -1,34 +1,52 @@
 <configuration>
-<property>
-	<name>metastore.task.threads.always</name>
-	<value>org.apache.hadoop.hive.metastore.events.EventCleanerTask</value>
-</property>
-<property>
-	<name>metastore.expression.proxy</name>
-	<value>org.apache.hadoop.hive.metastore.DefaultPartitionExpressionProxy</value>
-</property>
-<property>
-	<name>javax.jdo.option.ConnectionDriverName</name>
-	<value>com.mysql.jdbc.Driver</value>
-</property>
-<property>
-	<name>javax.jdo.option.ConnectionURL</name>
-	<value>jdbc:mysql://10.5.0.6:3306/hive_metastore</value>
-</property>
-<property>
-	<name>javax.jdo.option.ConnectionUserName</name>
-	<value>root</value>
-</property>
-<property>
-	<name>javax.jdo.option.ConnectionPassword</name>
-	<value>root</value>
-</property>
-<property>
-	<name>metastore.warehouse.dir</name>
-	<value>s3a://xxxxxxx</value>
-</property>
-<property>
-	<name>metastore.thrift.port</name>
-	<value>9083</value>
-</property>
+    <property>
+        <name>metastore.thrift.uris</name>
+        <value>thrift://metastore:9083</value>
+        <description>Thrift URI for the remote metastore. Used by metastore client to connect to remote metastore.</description>
+    </property>
+    <property>
+        <name>metastore.task.threads.always</name>
+        <value>org.apache.hadoop.hive.metastore.events.EventCleanerTask,org.apache.hadoop.hive.metastore.MaterializationsCacheCleanerTask</value>
+    </property>
+    <property>
+        <name>metastore.expression.proxy</name>
+        <value>org.apache.hadoop.hive.metastore.DefaultPartitionExpressionProxy</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>org.postgresql.Driver</value>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:postgresql://database/metastore_db</value>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>metastore</value>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>password</value>
+    </property>
+
+    <property>
+        <name>fs.s3a.access.key</name>
+        <value>accesskey</value>
+    </property>
+    <property>
+        <name>fs.s3a.secret.key</name>
+        <value>secretkey</value>
+    </property>
+    <property>
+        <name>fs.s3a.endpoint</name>
+        <value>http://minio:9000</value>
+    </property>
+    <property>
+        <name>fs.s3a.path.style.access</name>
+        <value>true</value>
+    </property>
+
 </configuration>

@@ -1,45 +1,48 @@
-version: "3.9"
+version: "3.8"
+
 services:
-  hive-metastore:
-    image: "hive-metastore/metastore"
-    build: .
-    command: sh -c "sh /opt/hive-metastore/bin/entrypoint.sh 2>&1 /var/log/metastore.log "
-    depends_on:
-      - db
-    environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
-    ports:
-      - "9083:9083/tcp"
-    networks:
-      vpc123:
-        ipv4_address: 10.5.0.5
-  db:
-    image: mysql:5.7
-    restart: always
-    environment:
-      MYSQL_USER: "${MYSQL_USER}"
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: hive_metastore
-    ports:
-      - "3308:3306/tcp"
+  database:
+    image: postgres:13-alpine
     expose:
-      - '3306'
+      - 5432
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: metastore
+      POSTGRES_DB: metastore_db
     volumes:
-      - db:/var/lib/mysql
-    networks:
-      vpc123:
-        ipv4_address: 10.5.0.6
+      - db:/var/lib/postgresql/data/
+
+  minio:
+    image: minio/minio
+    command: server --console-address ":9001" /data
+    environment:
+      - MINIO_ROOT_USER=accesskey
+      - MINIO_ROOT_PASSWORD=secretkey
+    volumes:
+      - minio_data:/data
+    ports:
+      - 9000:9000
+      - 9001:9001
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc config host add warehouse http://minio:9000 accesskey secretkey) do echo '...waiting...' && sleep 1; done;
+      /usr/bin/mc mb warehouse/local-warehouse;
+      exit 0;
+      "
+
+  metastore:
+    build: .
+    image: hive-metastore-standalone:latest
+    ports:
+      - 9083:9083
+    depends_on:
+      - database
 
 volumes:
-   db:
-
-networks:
-  vpc123:
-    driver: bridge
-    ipam:
-     config:
-       - subnet: 10.5.0.0/16
-         gateway: 10.5.0.1
+  minio_data:
+  db:
