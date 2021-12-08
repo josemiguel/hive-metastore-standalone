@@ -13,9 +13,7 @@ from hive_metastore_standalone.client.thrift_autogen.hive_metastore.ttypes impor
 from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.HiveDatabase import (
     HiveDatabase,
 )
-from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.HiveTable import (
-    HiveTable,
-)
+from hive_metastore_standalone.client.thrift_autogen.hive_metastore_abstractions.HiveTable import HiveTable
 
 logging.basicConfig(level=logging.INFO)
 
@@ -34,7 +32,7 @@ class HivePandasDataset:
         dataframe=None,
     ):
 
-        if not dataframe is None:
+        if not dataframe.empty:
             for col in list(dataframe.columns):
                 if col not in schema and col not in partitions:
                     raise Exception(
@@ -97,7 +95,7 @@ class HivePandasDataset:
 
         if len(dataframe_cols) != len(sorted_columns + sorted_partitions):
             raise Exception(
-                f"Number of columns different your data: {dataframe_cols} metastore: {sorted_columns} + {sorted_partitions}"
+                f"Number of columns different your data: {dataframe_cols} metastore: {sorted_columns} + {sorted_partitions}"  # noqa: E501
             )
         if not equals:
             raise Exception(
@@ -115,22 +113,16 @@ class HivePandasDataset:
             new_partition_thrift_object = hive_table.get_partition_thrift_object(partition_values)
 
             sorted_columns = list(map(lambda col: col.name, hive_table.thrift_object.sd.cols))
-            sorted_partitions = list(
-                map(lambda col: col.name, hive_table.thrift_object.partitionKeys)
-            )
+            sorted_partitions = list(map(lambda col: col.name, hive_table.thrift_object.partitionKeys))
             dataframe_cols = list(self.dataframe.columns)
 
             if not merge_schema:
                 self.validate_schema(sorted_columns, sorted_partitions, dataframe_cols)
             else:
-                new_columns = set(self.schema) - set(
-                    sorted_columns
-                )  # (A,B,C) - (A, B) = C, new schema = ABC
+                new_columns = set(self.schema) - set(sorted_columns)  # (A,B,C) - (A, B) = C, new schema = ABC
                 new_columns_schema = {k: v for k, v in self.schema.items() if k in new_columns}
 
-                old_columns = set(sorted_columns) - set(
-                    self.schema
-                )  # (B,C) - (B, A) = C, new schema = BA
+                old_columns = set(sorted_columns) - set(self.schema)  # (B,C) - (B, A) = C, new schema = BA
                 old_columns_names = [col for col in sorted_columns if col in old_columns]
 
                 logging.info(f"Adding new columns:  {list(new_columns_schema.keys())} ")
@@ -138,9 +130,7 @@ class HivePandasDataset:
                 logging.info(f"Removing old columns:  {old_columns_names} ")
                 hive_table.drop_columns(old_columns_names)
 
-                hive_client.setMetaConf(
-                    hive_client.COL_TYPE_INCOMPATIBILITY_DISALLOW_CONFIG, "false"
-                )
+                hive_client.setMetaConf(hive_client.COL_TYPE_INCOMPATIBILITY_DISALLOW_CONFIG, "false")
                 hive_client.alter_table(
                     dbname=self.database, tbl_name=self.tablename, new_tbl=hive_table.thrift_object
                 )
@@ -219,9 +209,7 @@ class HivePandasDataset:
             with io.StringIO() as csv_buffer:
                 df.to_csv(csv_buffer, index=False, header=False)
 
-                response = self.s3_client.put_object(
-                    Bucket=bucket, Key=objectkey, Body=csv_buffer.getvalue()
-                )
+                response = self.s3_client.put_object(Bucket=bucket, Key=objectkey, Body=csv_buffer.getvalue())
                 response_metadata = response.get("ResponseMetadata", {})
                 status = response_metadata.get("HTTPStatusCode")
                 if status != 200:
