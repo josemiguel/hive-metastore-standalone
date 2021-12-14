@@ -150,6 +150,8 @@ class HivePandasDataset:
     def read_dataframe(self, partition_values):
         with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
             table = hive_client.get_table(self.database, self.tablename)
+            table_schema = list({col.name: col.type for col in table.sd.cols}.keys())
+            table_partitions = list({col.name: col.type for col in table.partitionKeys}.keys())
             hive_table = HiveTable.from_thrift_object(table)
             partition = hive_table.get_partition_thrift_object(partition_values)
             partition_location = partition.sd.location
@@ -170,7 +172,7 @@ class HivePandasDataset:
                         pandas.read_csv(
                             object_response.get("Body"),
                             header=None,
-                            names=list(partition_values.keys()),
+                            names=table_schema + table_partitions,
                         )
                     )
 
