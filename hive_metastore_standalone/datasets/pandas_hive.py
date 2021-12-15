@@ -32,7 +32,7 @@ class HivePandasDataset:
         dataframe=None,
     ):
 
-        if not dataframe.empty:
+        if dataframe and not dataframe.empty:
             for col in list(dataframe.columns):
                 if col not in schema and col not in partitions:
                     raise Exception(
