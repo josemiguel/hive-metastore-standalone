@@ -142,18 +142,14 @@ class HivePandasDataset:
             finally:
                 if overwrite:
                     logging.info(f"Overwritting data at {new_partition_thrift_object.sd.location}")
-                    self.write_dataframe_csv(
-                        partition_location=new_partition_thrift_object.sd.location,
-                        overwrite=overwrite,
-                        base_filename=base_filename
-                    )
                 else:
                     logging.info(f"Writing data at {new_partition_thrift_object.sd.location}")
-                    self.write_dataframe_csv(
-                        partition_location=new_partition_thrift_object.sd.location,
-                        overwrite=overwrite,
-                        base_filename=base_filename
-                    )
+                    
+                self.write_dataframe_csv(
+                    partition_location=new_partition_thrift_object.sd.location,
+                    overwrite=overwrite,
+                    base_filename=base_filename
+                )
 
     def read_dataframe(self, partition_values):
         with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
