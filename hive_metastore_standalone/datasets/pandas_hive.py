@@ -105,7 +105,7 @@ class HivePandasDataset:
         if not is_sorted:
             self.dataframe = self.dataframe[sorted_columns]
 
-    def save_as_csv(self, partition_values=None, merge_schema=False, overwrite=True):
+    def save_as_csv(self, partition_values=None, merge_schema=False, overwrite=True, base_filename="raw_data"):
 
         with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
             hive_table = self.create_structures_if_not_exists()
@@ -142,10 +142,14 @@ class HivePandasDataset:
             finally:
                 if overwrite:
                     logging.info(f"Overwritting data at {new_partition_thrift_object.sd.location}")
-                    self.write_dataframe_csv(
-                        partition_location=new_partition_thrift_object.sd.location,
-                        overwrite=overwrite,
-                    )
+                else:
+                    logging.info(f"Writing data at {new_partition_thrift_object.sd.location}")
+                    
+                self.write_dataframe_csv(
+                    partition_location=new_partition_thrift_object.sd.location,
+                    overwrite=overwrite,
+                    base_filename=base_filename
+                )
 
     def read_dataframe(self, partition_values):
         with HiveMetastoreClient(self.hive_host, self.hive_port) as hive_client:
@@ -193,7 +197,7 @@ class HivePandasDataset:
 
         return pandas.DataFrame(concat_series)
 
-    def write_dataframe_csv(self, partition_location, overwrite=False):
+    def write_dataframe_csv(self, partition_location, base_filename, overwrite=False):
         parse_result = urlparse(partition_location, allow_fragments=False)
         bucket = parse_result.netloc
 
@@ -207,7 +211,7 @@ class HivePandasDataset:
 
         for index, df in enumerate([self.dataframe]):
             objectkey = parse_result.path.strip("/")
-            objectkey = objectkey + "/raw_data_%08d.%s" % (index, "csv")
+            objectkey = objectkey + f"/{base_filename}_%08d.%s" % (index, "csv")
             with io.StringIO() as csv_buffer:
                 df.to_csv(csv_buffer, index=False, header=False)
 
